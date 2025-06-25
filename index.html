@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Simpsons‑Style Leader Map</title>
+  <script src="https://unpkg.com/d3@6"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <style>
+    .land { fill: #f2e394; stroke: #333; }
+    .popup {
+      position: absolute;
+      background: #fffbea;
+      border: 2px solid #f9d342;
+      border-radius: 8px;
+      padding: 8px;
+      pointer-events: none;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="popup" class="popup" style="display:none;"></div>
+  <script>
+    const width = 960, height = 600;
+    const svg = d3.select('#map')
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
+    const projection = d3.geoNaturalEarth1().scale(160).translate([width/2, height/2]);
+    const path = d3.geoPath(projection);
+    
+    const leaders = {
+      USA: { name: "Joe Biden", pic: "simpson_biden.png", nick: "Sleepy Joe" },
+      RUS: { name: "Vladimir Putin", pic: "simpson_putin.png", nick: "Mad Tsar" },
+      UKR: { name: "Volodymyr Zelenskyy", pic: "simpson_zelensky.png", nick: "Cartoon Commander" },
+      CHN: { name: "Xi Jinping", pic: "simpson_xi.png", nick: "Evil Winnie the Pooh" }
+    };
+
+    d3.json('https://unpkg.com/world-atlas@2/countries-110m.json').then(world => {
+      svg.append('g')
+        .selectAll('path')
+        .data(topojson.feature(world, world.objects.countries).features)
+        .join('path')
+        .attr('class', 'land')
+        .attr('d', path)
+        .on('mouseover', (e, d) => {
+          const c = leaders[d.id];
+          if (!c) return;
+          const [x,y] = d3.pointer(e);
+          d3.select('#popup')
+            .style('left', `${x+10}px`)
+            .style('top', `${y+10}px`)
+            .html(`<strong>${c.nick}</strong><br><em>${c.name}, ${d.properties.name}</em><br>
+                   <img src="${c.pic}" width="100"/>`)
+            .style('display', 'block');
+        })
+        .on('mouseout', () => {
+          d3.select('#popup').style('display', 'none');
+        });
+    });
+  </script>
+</body>
+</html>
